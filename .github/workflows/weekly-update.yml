@@ -1,0 +1,75 @@
+
+name: Weekly Update & Deploy
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Run at 00:00 every Sunday
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Fetch Script
+        run: node scripts/fetch-data.js
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code frontend/public/starlink.landing-prices.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and Push (if changed)
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add frontend/public/starlink.landing-prices.json frontend/public/metadata.json
+          git commit -m "chore: automated pricing data update"
+          git push
+
+      - name: Setup pnpm
+        if: steps.git-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        if: steps.git-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        working-directory: ./frontend
+        run: pnpm install
+
+      - name: Build
+        if: steps.git-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        working-directory: ./frontend
+        run: pnpm run build
+
+      - name: Upload artifact
+        if: steps.git-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend/dist
+
+  deploy:
+    needs: update-and-deploy
+    if: needs.update-and-deploy.result == 'success'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
