@@ -65,17 +65,19 @@ export const useStarlinkData = () => {
       setDataSource({ type: 'LIVE', date: new Date().toISOString(), proxy: proxyName });
     } catch (err) {
       try {
-        const baseUrl = import.meta.env.BASE_URL;
-        const localRes = await fetch(`${baseUrl}starlink.landing-prices.json`);
+        // Dynamic detection of the JSON location
+        const isCustomDomain = window.location.hostname !== 'genu-co.github.io';
+        const pathPrefix = isCustomDomain ? '' : '/starlink-price-explorer';
+        const localRes = await fetch(`${pathPrefix}/starlink.landing-prices.json`);
         const localJson = await localRes.json();
-        let archiveDate = '2025-04-10T00:00:00.000Z'; // fallback date
+        
+        let archiveDate = '2025-04-10T00:00:00.000Z';
         try {
-          const metaRes = await fetch(`${baseUrl}metadata.json`);
+          const metaRes = await fetch(`${pathPrefix}/metadata.json`);
           const metaJson = await metaRes.json();
           if (metaJson.lastUpdated) archiveDate = metaJson.lastUpdated;
-        } catch (metaErr) {
-          console.warn("Could not fetch metadata.json, using fallback date.");
-        }
+        } catch (e) {}
+
         setData(processStarlinkJson(localJson));
         setDataSource({ type: 'LOCAL', date: archiveDate, proxy: 'None' });
       } catch (e) {
