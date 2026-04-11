@@ -23,8 +23,8 @@ export async function generateMetadata() {
   // Even if not officially supported, if they use regional roaming, we want to target them.
   // We will just use the targetCodes as the primary SEO driver, translated in FR/EN.
   
-  const frNames = targetCodes.map(code => getCountryName(code, 'fr')).filter(n => n !== code);
-  const enNames = targetCodes.map(code => getCountryName(code, 'en')).filter(n => n !== code);
+  const frNames = targetCodes.map(code => getCountryName(code, 'fr')).filter((name, index) => name !== targetCodes[index]);
+  const enNames = targetCodes.map(code => getCountryName(code, 'en')).filter((name, index) => name !== targetCodes[index]);
 
   const frList = frNames.slice(0, 8).join(", ");
   const enList = enNames.slice(0, 8).join(", ");
