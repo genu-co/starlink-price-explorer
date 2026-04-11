@@ -11,11 +11,15 @@ const PROXIES = [
   { url: (target) => `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`, type: 'WRAPPED' }
 ];
 
-export const useStarlinkData = () => {
-  const [data, setData] = useState([]);
+export const useStarlinkData = (initialData = null) => {
+  const [data, setData] = useState(initialData ? processStarlinkJson(initialData.prices) : []);
   const [rates, setRates] = useState(FALLBACK_RATES);
-  const [loading, setLoading] = useState(true);
-  const [dataSource, setDataSource] = useState({ type: 'unknown', date: null, proxy: null });
+  const [loading, setLoading] = useState(!initialData);
+  const [dataSource, setDataSource] = useState({ 
+    type: initialData ? 'LOCAL' : 'unknown', 
+    date: initialData ? initialData.metadata.lastUpdated : null, 
+    proxy: null 
+  });
   const [detectedLoc, setDetectedLoc] = useState(null);
 
   const fetchWithProxy = async () => {

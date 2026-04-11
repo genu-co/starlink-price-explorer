@@ -1,27 +1,48 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+"use client";
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { Globe, Map as MapIcon, Info, ChevronDown, ChevronUp, Loader2, CheckSquare, Square, RefreshCw, Clock, Languages, Share2, Filter, ExternalLink, Search } from 'lucide-react';
-import { AFRICA_CODES, TRANSLATIONS } from './constants';
-import { useStarlinkData } from './hooks/useStarlinkData';
-import { getCountryName } from './utils/processor';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { AFRICA_CODES, TRANSLATIONS } from '../src/constants';
+import { useStarlinkData } from '../src/hooks/useStarlinkData';
+import { getCountryName } from '../src/utils/processor';
 
-export default function App() {
-  const queryParams = new URLSearchParams(window.location.search);
-  const [lang, setLang] = useState(queryParams.get('lang') || (navigator.language.startsWith('fr') ? 'fr' : 'en'));
-  const [targetCurrency, setTargetCurrency] = useState(queryParams.get('cur') || 'XAF');
-  const [filterMode, setFilterMode] = useState(queryParams.get('zone') || 'AFRICA');
-  const [activeCols, setActiveCols] = useState(queryParams.get('cols')?.split(',') || ['standard', 'roamReg']);
-  const [showKit, setShowKit] = useState(queryParams.get('kit') === 'true');
-  const [searchQuery, setSearchQuery] = useState(queryParams.get('q') || '');
+function TableContent({ initialData }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [lang, setLang] = useState(searchParams.get('lang') || 'en');
+  const [targetCurrency, setTargetCurrency] = useState(searchParams.get('cur') || 'XAF');
+  const [filterMode, setFilterMode] = useState(searchParams.get('zone') || 'AFRICA');
+  const [activeCols, setActiveCols] = useState(searchParams.get('cols')?.split(',') || ['standard', 'roamReg']);
+  const [showKit, setShowKit] = useState(searchParams.get('kit') === 'true');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [sort, setSort] = useState({ key: 'roamReg', dir: 'asc' });
   const [shareFeedback, setShareFeedback] = useState(false);
 
-  const { data, rates, loading, dataSource, detectedLoc, refresh } = useStarlinkData();
+  // Set default language on mount if not specified in URL
+  useEffect(() => {
+    if (!searchParams.get('lang') && typeof navigator !== 'undefined') {
+      const navLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
+      if (navLang !== lang) setLang(navLang);
+    }
+  }, [searchParams, lang]);
+
+  const { data, rates, loading, dataSource, detectedLoc, refresh } = useStarlinkData(initialData);
 
   useEffect(() => {
-    const p = new URLSearchParams({ lang, cur: targetCurrency, zone: filterMode, cols: activeCols.join(','), kit: showKit, q: searchQuery });
-    window.history.replaceState({}, '', `?${p.toString()}`);
-  }, [lang, targetCurrency, filterMode, activeCols, showKit, searchQuery]);
+    const p = new URLSearchParams();
+    if (lang !== 'en') p.set('lang', lang);
+    if (targetCurrency !== 'XAF') p.set('cur', targetCurrency);
+    if (filterMode !== 'AFRICA') p.set('zone', filterMode);
+    if (activeCols.join(',') !== 'standard,roamReg') p.set('cols', activeCols.join(','));
+    if (showKit) p.set('kit', 'true');
+    if (searchQuery) p.set('q', searchQuery);
+    
+    const queryStr = p.toString();
+    router.replace(pathname + (queryStr ? `?${queryStr}` : ''), { scroll: false });
+  }, [lang, targetCurrency, filterMode, activeCols, showKit, searchQuery, router, pathname]);
 
   const t = (k, p = {}) => {
     let text = TRANSLATIONS[lang][k] || k;
@@ -222,5 +243,20 @@ export default function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StarlinkTable({ initialData }) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-blue-600" size={48} />
+          <p className="text-slate-500 font-medium">Loading interface...</p>
+        </div>
+      </div>
+    }>
+      <TableContent initialData={initialData} />
+    </Suspense>
   );
 }
