@@ -119,3 +119,23 @@ Contexte : Kit 2 (Bolivie) a épuisé son quota de data prioritaire (100 GB) ava
 - **Recommandation pour la prochaine fois** : ne PAS "tester" un plan intermédiaire en cours de cycle dans l'idée de revenir en arrière si ça ne convient pas — choisir directement le plan final visé. Chaque aller-retour a un coût réel non négligeable, contrairement à l'intuition d'un simple prorata linéaire réversible.
 - Non résolu : le "Standard/Loading" du calcul exact de `base` (pourquoi ~40 BOB précisément) reste incertain — hypothèse la plus probable est un crédit plafonné/partiel plutôt qu'un vrai report proportionnel, mais le mécanisme exact interne de Starlink n'est pas documenté publiquement et n'a pas pu être vérifié autrement qu'empiriquement sur ce seul cas.
 - Catalogue statique (`starlink.landing-prices.json`, région BO) vs prix live confirmés cohérents dans leur structure (mêmes noms d'offres : Residential/Residential Lite/Roam-100GB/Roam-Unlimited/Local Priority/Global Priority), mais avec un **décalage constant d'environ ×1.064** (catalogue en retard sur le live, cohérent avec la crise de change du BOB déjà documentée plus haut) : Residential Lite 460→490 (×1.0652), Roam-Unlimited 1100→1170 (×1.0636).
+
+### Structure du plan "Global Priority" (recherche externe, pas testé en live)
+
+Confirmé via recherche (Starlink Help Center + RVMobileInternet, structure globale valable hors-US avec montants localisés) :
+- Le plan sépare un **frais d'accès terminal/kit** (~150 USD/mois aux US) d'un **achat de data prioritaire obligatoire séparé**.
+- **Impossible de souscrire avec 0 GB de data** — un minimum de 50 GB d'achat est imposé (~100 USD aux US, soit ~250 USD/mois total US pour l'entrée de gamme).
+- Une fois le bloc de data épuisé : débit réduit à **1 Mbps download / 0.5 Mbps upload** jusqu'au renouvellement du cycle (sauf recharge auto).
+- **Implication pour l'écran vu en Bolivie** ("Global Priority Subscription", 1,175 BOB/mois affiché avec les champs blocs 50GB/500GB à "0")  : ce "0" désigne très probablement "0 bloc *additionnel*" au-delà d'un minimum de 50GB déjà inclus par défaut dans le prix affiché — pas un plan à 0 GB de data prioritaire réelle. Non vérifié en live (écran partiellement caché par le panneau de prorata au moment de la capture), à confirmer en scrollant sur le vrai écran si besoin de précision.
+
+Sources : [Starlink Help Center — Local/Global Priority](https://starlink.com/ai/support/article/ce6af7c3-6bc5-1349-ef29-ed7451d0f656), [Starlink Help Center — What are Local/Global Priority plans](https://starlink.com/as/support/article/1124df77-fdec-91e7-bed9-ba489cffda25), [RVMobileInternet — Priority Plan Lineup Changes](https://www.rvmobileinternet.com/starlink-massively-changes-priority-plan-lineup-unlimited-high-speed-data-eliminated/), [RVMobileInternet — Pricing Adjustments](https://www.rvmobileinternet.com/starlink-adjusts-pricing-for-global-priority-and-local-priority-plans/).
+
+### Découverte clé : les compteurs de data sont suivis séparément PAR TYPE DE PLAN, pas globalement
+
+Après être revenu sur Roam-100GB suite au test Lite, l'utilisateur restait bridé à ~0.6-1 Mbps malgré le changement de plan. L'écran "Data usage" du compte (app Starlink, période Aug17-Sep16) l'explique :
+
+- **Roam Data : 100 GB / Included** → entièrement consommé (c'est ce bucket précis qui avait causé le ralentissement initial)
+- **Residential Lite Data : 0 GB / Unlimited** → quasiment pas utilisé pendant les quelques heures sur Lite
+- **Low Speed Data : 12 GB / Unlimited** → data post-épuisement, débit très réduit (~0.6-1 Mbps constaté au speedtest intégré de l'app)
+
+**Conclusion** : Starlink ne mutualise pas un seul compteur de data haute-vitesse — chaque type de plan (Roam vs Residential/Residential Lite vs Global/Local Priority) a son propre bucket suivi indépendamment pour le cycle en cours. Revenir sur un plan déjà épuisé (ici Roam-100GB, 100/100 GB déjà consommés) **ne réinitialise rien** — on retombe directement dans le même trou de dépriorisation qu'avant le changement. Seul un plan gouverné par un bucket *différent et non épuisé* (ex. Residential Lite, dont le bucket était encore à 0/Unlimited) redonne un débit normal dans l'immédiat ; sinon il faut soit acheter un bloc de data supplémentaire pour combler spécifiquement le bucket épuisé (catalogue BO : +50GB à 165 BOB, +500GB à 825 BOB), soit attendre le renouvellement de cycle (17 du mois) qui réinitialise les compteurs.
