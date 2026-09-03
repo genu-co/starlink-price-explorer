@@ -1,9 +1,9 @@
 
 "use client";
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
-import { Globe, Map as MapIcon, Info, ChevronDown, ChevronUp, Loader2, CheckSquare, Square, RefreshCw, Clock, Languages, Share2, Filter, ExternalLink, Search } from 'lucide-react';
+import { Globe, Map as MapIcon, Info, ChevronDown, ChevronUp, Loader2, CheckSquare, Square, RefreshCw, Clock, Languages, Share2, Filter, ExternalLink, Search, AlertTriangle } from 'lucide-react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { AFRICA_CODES, TRANSLATIONS } from '../src/constants';
+import { AFRICA_CODES, TRANSLATIONS, VOLATILE_CURRENCIES } from '../src/constants';
 import { useStarlinkData } from '../src/hooks/useStarlinkData';
 import { getCountryName } from '../src/utils/processor';
 
@@ -17,6 +17,7 @@ function TableContent({ initialData }) {
   const [filterMode, setFilterMode] = useState(searchParams.get('zone') || 'AFRICA');
   const [activeCols, setActiveCols] = useState(searchParams.get('cols')?.split(',') || ['standard', 'roamReg']);
   const [showKit, setShowKit] = useState(searchParams.get('kit') === 'true');
+  const [showTax, setShowTax] = useState(searchParams.get('tax') === 'true');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [sort, setSort] = useState({ key: 'roamReg', dir: 'asc' });
   const [shareFeedback, setShareFeedback] = useState(false);
@@ -38,11 +39,12 @@ function TableContent({ initialData }) {
     if (filterMode !== 'AFRICA') p.set('zone', filterMode);
     if (activeCols.join(',') !== 'standard,roamReg') p.set('cols', activeCols.join(','));
     if (showKit) p.set('kit', 'true');
+    if (showTax) p.set('tax', 'true');
     if (searchQuery) p.set('q', searchQuery);
-    
+
     const queryStr = p.toString();
     router.replace(pathname + (queryStr ? `?${queryStr}` : ''), { scroll: false });
-  }, [lang, targetCurrency, filterMode, activeCols, showKit, searchQuery, router, pathname]);
+  }, [lang, targetCurrency, filterMode, activeCols, showKit, showTax, searchQuery, router, pathname]);
 
   const t = (k, p = {}) => {
     let text = TRANSLATIONS[lang][k] || k;
@@ -74,18 +76,20 @@ function TableContent({ initialData }) {
       );
     }
 
+    const isRawKey = sort.key === 'countryName' || sort.key === 'taxRate';
+
     return list.sort((a, b) => {
-      const isAValValid = sort.key === 'countryName' ? true : (a[sort.key + 'Conv'] > 0);
-      const isBValValid = sort.key === 'countryName' ? true : (b[sort.key + 'Conv'] > 0);
+      const isAValValid = isRawKey ? true : (a[sort.key + 'Conv'] > 0);
+      const isBValValid = isRawKey ? true : (b[sort.key + 'Conv'] > 0);
 
       // Rule: Always push invalid/N/A to the bottom
       if (isAValValid && !isBValValid) return -1;
       if (!isAValValid && isBValValid) return 1;
       if (!isAValValid && !isBValValid) return 0;
 
-      const aVal = sort.key === 'countryName' ? a.countryName : (a[sort.key + 'Conv'] || 0);
-      const bVal = sort.key === 'countryName' ? b.countryName : (b[sort.key + 'Conv'] || 0);
-      
+      const aVal = isRawKey ? (a[sort.key] ?? '') : (a[sort.key + 'Conv'] || 0);
+      const bVal = isRawKey ? (b[sort.key] ?? '') : (b[sort.key + 'Conv'] || 0);
+
       if (aVal < bVal) return sort.dir === 'asc' ? -1 : 1;
       if (aVal > bVal) return sort.dir === 'asc' ? 1 : -1;
       return 0;
@@ -99,8 +103,13 @@ function TableContent({ initialData }) {
       </span>
     );
     return new Intl.NumberFormat(lang === 'fr' ? 'fr-FR' : 'en-US', { 
-      style: 'currency', currency: targetCurrency, maximumFractionDigits: targetCurrency === 'XAF' ? 0 : 2 
+      style: 'currency', currency: targetCurrency, maximumFractionDigits: targetCurrency === 'XAF' ? 0 : 2
     }).format(v);
+  };
+
+  const formatHT = (v, taxRate) => {
+    if (!showTax || !v || !taxRate) return null;
+    return <span className="text-[9px] text-slate-400 block">{t('priceHT')}: {formatMoney(v / (1 + taxRate / 100))}</span>;
   };
 
   if (loading) return (
@@ -150,6 +159,9 @@ function TableContent({ initialData }) {
               ))}
               <button onClick={() => setShowKit(!showKit)} className={`px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all flex items-center gap-2 ${showKit ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-100' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                 {showKit ? <CheckSquare size={14}/> : <Square size={14}/>} {t('showKit')}
+              </button>
+              <button onClick={() => setShowTax(!showTax)} className={`px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all flex items-center gap-2 ${showTax ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-100' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                {showTax ? <CheckSquare size={14}/> : <Square size={14}/>} {t('showTax')}
               </button>
             </div>
             
@@ -201,6 +213,9 @@ function TableContent({ initialData }) {
                       <div className="flex items-center justify-end gap-2">{t(c)} {sort.key === c && (sort.dir === 'asc' ? <ChevronUp size={14}/> : <ChevronDown size={14}/>)}</div>
                     </th>
                   ))}
+                  {showTax && <th className="p-6 text-right cursor-pointer" onClick={() => setSort({key: 'taxRate', dir: sort.key === 'taxRate' && sort.dir === 'asc' ? 'desc' : 'asc'})}>
+                    <div className="flex items-center justify-end gap-2">{t('tax')} {sort.key === 'taxRate' && (sort.dir === 'asc' ? <ChevronUp size={14}/> : <ChevronDown size={14}/>)}</div>
+                  </th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -212,17 +227,21 @@ function TableContent({ initialData }) {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-bold text-slate-900 group-hover/link:text-blue-600 transition-colors">{row.countryName}</p>
+                            {VOLATILE_CURRENCIES.includes(row.currency) && (
+                              <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" title={t('volatileCurrencyWarning')} />
+                            )}
                             <ExternalLink size={12} className="text-slate-300 group-hover/link:text-blue-400 transition-colors" />
                           </div>
                           <p className="text-[10px] text-slate-400 font-mono font-bold mt-1 tracking-wider opacity-60 uppercase">{row.region} • {row.currency}</p>
                         </div>
                       </a>
                     </td>
-                    {showKit && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.kitConv)}</td>}
-                    {activeCols.includes('standard') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.standardConv)}</td>}
-                    {activeCols.includes('roamReg') && <td className="p-6 text-right font-black text-blue-600 text-base bg-blue-50/10">{formatMoney(row.roamRegConv, true)}</td>}
-                    {activeCols.includes('roamGlobal') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.roamGlobalConv, true)}</td>}
-                    {activeCols.includes('roamCapped') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.roamCappedConv, true)}</td>}
+                    {showKit && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.kitConv)}{formatHT(row.kitConv, row.taxRate)}</td>}
+                    {activeCols.includes('standard') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.standardConv)}{formatHT(row.standardConv, row.taxRate)}</td>}
+                    {activeCols.includes('roamReg') && <td className="p-6 text-right font-black text-blue-600 text-base bg-blue-50/10">{formatMoney(row.roamRegConv, true)}{formatHT(row.roamRegConv, row.taxRate)}</td>}
+                    {activeCols.includes('roamGlobal') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.roamGlobalConv, true)}{formatHT(row.roamGlobalConv, row.taxRate)}</td>}
+                    {activeCols.includes('roamCapped') && <td className="p-6 text-right font-bold text-slate-500 text-sm">{formatMoney(row.roamCappedConv, true)}{formatHT(row.roamCappedConv, row.taxRate)}</td>}
+                    {showTax && <td className="p-6 text-right font-bold text-slate-500 text-sm">{row.taxRate ? `${row.taxRate}%` : 'N/A'}</td>}
                   </tr>
                 ))}
               </tbody>

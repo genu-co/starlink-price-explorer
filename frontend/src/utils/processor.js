@@ -1,3 +1,4 @@
+import { TAX_RATES } from '../constants';
 
 export const processStarlinkJson = (json) => {
   const regionsMap = new Map();
@@ -15,6 +16,7 @@ export const processStarlinkJson = (json) => {
             roamReg: null, 
             roamGlobal: null, 
             roamCapped: null,
+            taxRate: TAX_RATES[region.toUpperCase()] ?? null,
             starlinkUrl: `https://www.starlink.com/${region}`
           });
         }
