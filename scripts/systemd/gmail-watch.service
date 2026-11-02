@@ -1,0 +1,7 @@
+[Unit]
+Description=Veille des e-mails Starlink (Gmail, lecture seule)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /home/djm/Workspaces/genu/mini_projects/starlink_price_comparator/scripts/gmail_watch.py

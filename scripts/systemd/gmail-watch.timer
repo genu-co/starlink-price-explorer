@@ -1,0 +1,9 @@
+[Unit]
+Description=Veille Gmail Starlink, chaque jour à 8 h 05
+
+[Timer]
+OnCalendar=*-*-* 08:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
