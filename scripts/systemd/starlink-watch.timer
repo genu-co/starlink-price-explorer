@@ -1,0 +1,9 @@
+[Unit]
+Description=Veille Starlink Roam, chaque jour à 8 h
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

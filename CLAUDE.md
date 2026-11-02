@@ -26,3 +26,8 @@ Pour le contexte personnel de l'utilisateur (son propre kit Starlink, sa situati
 - Le catalogue statique peut être **en retard** pour les devises en forte volatilité (confirmé pour le BOB bolivien mi-2026, cf. `VOLATILE_CURRENCIES`).
 - L'API de prix **live authentifiée** de Starlink (`api/webagg/v1/activate/plans/{utid}`) n'est pas accessible anonymement : recherche/géocodage d'adresse = public, mais créer une `serviceAddressId` renvoie 401 sans session utilisateur, et il y a en plus une protection anti-fraude (Forter)/captcha derrière. **Ne pas construire d'outillage pour contourner ça** — une tentative précédente d'un sous-agent dans ce sens a été supprimée volontairement (hors périmètre, s'approchait du contournement anti-bot).
 - Exports d'analyse ponctuels à la racine du repo (non régénérés automatiquement, snapshots figés dans le temps) : `starlink_all_countries.csv`, `starlink_prices_in_XAF.csv`.
+
+## Workflow
+
+- **Commiter au fur et à mesure** (demande explicite de l'utilisateur) : un commit par étape cohérente, sans attendre la fin de la tâche. Jamais de ligne d'attribution Claude.
+- Veille des prix Roam : `scripts/promo_watch.py` (timer systemd utilisateur `starlink-watch.timer`, 8 h, copies des unités dans `scripts/systemd/`). Données locales dans `~/.local/share/starlink-watch/`, alertes Telegram via `~/.config/starlink-watch/telegram.env`.

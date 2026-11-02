@@ -1,0 +1,6 @@
+[Unit]
+Description=Veille des prix Starlink Roam
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /home/djm/Workspaces/genu/mini_projects/starlink_price_comparator/scripts/promo_watch.py
