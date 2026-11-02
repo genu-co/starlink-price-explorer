@@ -9,8 +9,24 @@ export const AFRICA_CODES = [
 
 export const VOLATILE_CURRENCIES = ["BOB"];
 
+// Base USD (unités de devise pour 1 USD), taux open.er-api.com du 2 novembre 2026
 export const FALLBACK_RATES = {
-  "USD": 1, "XAF": 610, "EUR": 0.92, "NGN": 1500, "KES": 130, "RWF": 1280
+  "USD": 1, "XAF": 585, "EUR": 0.8915, "NGN": 1332, "KES": 130, "RWF": 1482,
+  "AED": 3.673, "ALL": 81.23, "AMD": 362, "ARS": 1523, "AUD": 1.433,
+  "AZN": 1.7, "BBD": 2, "BDT": 124, "BHD": 0.376, "BIF": 3004, "BOB": 11.69,
+  "BRL": 5.05, "BSD": 1, "BTN": 94.9, "BWP": 14.15, "CAD": 1.41, "CDF": 2318,
+  "CHF": 0.8263, "CLP": 983, "COP": 3177, "CRC": 455, "CVE": 98.3,
+  "CZK": 21.7, "DKK": 6.664, "DOP": 61.5, "FJD": 2.251, "FKP": 0.7511,
+  "GBP": 0.751, "GEL": 2.597, "GHS": 11.7, "GTQ": 7.648, "GYD": 209,
+  "HNL": 26.86, "HUF": 324, "IDR": 18046, "ILS": 3.105, "ISK": 121,
+  "JMD": 159, "JOD": 0.709, "JPY": 158, "KRW": 1331, "KWD": 0.3099,
+  "KYD": 0.8333, "KZT": 452, "LKR": 331, "MDL": 17.92, "MGA": 4533,
+  "MKD": 54.82, "MNT": 3593, "MVR": 15.46, "MWK": 1744, "MXN": 18.44,
+  "MYR": 4.083, "MZN": 63.84, "NOK": 9.417, "NZD": 1.765, "OMR": 0.3845,
+  "PEN": 3.443, "PHP": 63.01, "PLN": 3.896, "PYG": 5752, "QAR": 3.64,
+  "RON": 4.748, "SBD": 8.042, "SEK": 9.913, "SLE": 24.36, "STN": 21.84,
+  "TJS": 9.233, "TOP": 2.388, "TTD": 6.971, "UYU": 40.31, "VUV": 120,
+  "WST": 2.745, "XCD": 2.7, "XOF": 585, "ZAR": 16.42, "ZMW": 20.13
 };
 
 export const TAX_RATES = {
