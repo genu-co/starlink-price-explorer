@@ -111,6 +111,56 @@ L'Ukraine est à 55 553 XAF comme l'Équateur, le Vanuatu à 55 780 et Trinité-
 - Le Japon est à 23 992 XAF en 100 Go mais n'a pas d'offre Illimité dans le classement.
 - Aucun pays africain n'entre dans les 15 premiers : le Rwanda est à environ 27 600 XAF en 100 Go et le Tchad à 30 000.
 
+## Consommation mesurée du PC
+
+Relevés pris le 3 novembre 2026 sur l'interface Wi-Fi `wlo1` du PC. Ils ne mesurent que ce PC, pas tout le foyer.
+
+`vnstat -i wlo1 -d`, jours avec du trafic depuis le 20 octobre :
+
+| Jour | Reçu | Envoyé | Total |
+|---|---|---|---|
+| 20 oct. | 818 Mio | 419 Mio | 1,21 Gio |
+| 21 oct. | 1,50 Gio | 321 Mio | 1,82 Gio |
+| 22 oct. | 1,90 Gio | 149 Mio | 2,05 Gio |
+| 24 oct. | 22 Mio | 3 Mio | 25 Mio |
+| 25 oct. | 544 Mio | 101 Mio | 645 Mio |
+| 31 oct. | 1,97 Gio | 1,76 Gio | 3,74 Gio |
+| 1er nov. | 5,32 Gio | 1,24 Gio | 6,56 Gio |
+| 2 nov. | 9,78 Gio | 3,74 Gio | 13,52 Gio |
+| 3 nov. (partiel) | 211 Mio | 24 Mio | 235 Mio |
+
+Les 28 et 30 octobre, le trafic est quasi nul (quelques Kio). vnstat n'a aucune donnée pour les 23, 26, 27 et 29 octobre.
+
+`vnstat -i wlo1 -m` :
+
+| Mois | Reçu | Envoyé | Total |
+|---|---|---|---|
+| Octobre 2026 | 6,73 Gio | 2,73 Gio | 9,46 Gio |
+| Novembre 2026 (au 3) | 15,31 Gio | 5,01 Gio | 20,32 Gio |
+
+vnstat projette environ 302 Gio pour novembre. Cette projection extrapole les trois premiers jours, dont le 2 novembre, très chargé.
+
+`netwatch-report --days 7 --by process --top 10`, total de 16,2 Go :
+
+| Processus | Total (Mo) |
+|---|---|
+| unknown | 9 209 |
+| apt (https) | 1 847 |
+| ssh | 1 354 |
+| apt (http) | 1 256 |
+| dictate-whisper (python) | 887 |
+| python3 | 676 |
+| claude | 305 |
+| chromium | 137 |
+| uv | 136 |
+| hermes (python) | 98 |
+
+Précautions de lecture :
+
+- Les logs netwatch antérieurs au 1er novembre 2026 surestiment la consommation, à cause d'un bug de nethogs corrigé ce jour-là. La fenêtre de 7 jours contient encore quelques jours d'avant la correction.
+- La catégorie `unknown` représente plus de la moitié du trafic. Elle ne peut donc pas être attribuée à un processus précis.
+- Le kit Starlink a affiché 1,6 To sur le cycle du 20 octobre au 19 novembre, mais sur un autre compte (Italie). Ce chiffre couvre tout le trafic de ce compte et ne se compare pas aux relevés de ce PC.
+
 ## Starlink Community et prochaines étapes
 
 Je n'ai pas encore recherché Starlink Community (le programme de partage de connexion pour amortir les charges) : je ne peux donc rien affirmer sur ses conditions ni sur sa disponibilité au Cameroun ou en Bolivie.
